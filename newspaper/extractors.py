@@ -61,17 +61,19 @@ class ContentExtractor(object):
         self.stopwords_class = config.stopwords_class
 
     def update_language(self, meta_lang):
-        '''Required to be called before the extraction process in some
+        """
+        Required to be called before the extraction process in some
         cases because the stopwords_class has to set incase the lang
         is not latin based
-        '''
+        """
         if meta_lang:
             self.language = meta_lang
             self.stopwords_class = \
                 self.config.get_stopwords_class(meta_lang)
 
     def get_authors(self, doc):
-        """Fetch the authors of the article, return as a list
+        """
+        Fetch the authors of the article, return as a list
         Only works for english articles
         """
         _digits = re.compile('\d')
@@ -80,7 +82,8 @@ class ContentExtractor(object):
             return bool(_digits.search(d))
 
         def uniqify_list(lst):
-            """Remove duplicates from provided list but maintain original order.
+            """
+            Remove duplicates from provided list but maintain original order.
               Derived from http://www.peterbe.com/plog/uniqifiers-benchmark
             """
             seen = {}
@@ -93,10 +96,11 @@ class ContentExtractor(object):
             return result
 
         def parse_byline(search_str):
-            """Takes a candidate line of html or text and
+            """
+            Takes a candidate line of html or text and
             extracts out the name(s) in list form
-            >>> search_str('<div>By: <strong>Lucas Ou-Yang</strong>, \
-                            <strong>Alex Smith</strong></div>')
+            >>> parse_byline('<div>By: <strong>Lucas Ou-Yang</strong>, '
+            ...              '<strong>Alex Smith</strong></div>')
             ['Lucas Ou-Yang', 'Alex Smith']
             """
             # Remove HTML boilerplate
@@ -171,7 +175,8 @@ class ContentExtractor(object):
         # return authors
 
     def get_publishing_date(self, url, doc):
-        """3 strategies for publishing date extraction. The strategies
+        """
+        3 strategies for publishing date extraction. The strategies
         are descending in accuracy and the next strategy is only
         attempted if a preferred one fails.
 
@@ -268,7 +273,8 @@ class ContentExtractor(object):
         return title
 
     def split_title(self, title, splitter):
-        """Split the title to best part possible
+        """
+        Split the title to best part possible
         """
         large_text_length = 0
         large_text_index = 0
@@ -286,7 +292,8 @@ class ContentExtractor(object):
         return TITLE_REPLACEMENTS.replaceAll(title).strip()
 
     def get_feed_urls(self, source_url, categories):
-        """Takes a source url and a list of category objects and returns
+        """
+        Takes a source url and a list of category objects and returns
         a list of feed urls
         """
         total_feed_urls = []
@@ -298,13 +305,13 @@ class ContentExtractor(object):
             total_feed_urls.extend(feed_urls)
 
         total_feed_urls = total_feed_urls[:50]
-        total_feed_urls = [urls.prepare_url(f, source_url)
-                           for f in total_feed_urls]
-        total_feed_urls = list(set(total_feed_urls))
+        total_feed_urls = {urls.prepare_url(f, source_url)
+                           for f in total_feed_urls}
         return total_feed_urls
 
     def get_favicon(self, doc):
-        """Extract the favicon from a website http://en.wikipedia.org/wiki/Favicon
+        """
+        Extract the favicon from a website http://en.wikipedia.org/wiki/Favicon
         <link rel="shortcut icon" type="image/png" href="favicon.png" />
         <link rel="icon" type="image/png" href="favicon.png" />
         """
@@ -316,7 +323,8 @@ class ContentExtractor(object):
         return ''
 
     def get_meta_lang(self, doc):
-        """Extract content language from meta
+        """
+        Extract content language from meta
         """
         # we have a lang attribute in html
         attr = self.parser.getAttribute(doc, attr='lang')
@@ -340,14 +348,15 @@ class ContentExtractor(object):
 
         return None
 
-    def get_meta_content(self, doc, metaName):
-        """Extract a given meta content form document.
-        Example metaNames:
+    def get_meta_content(self, doc, meta_name):
+        """
+        Extract a given meta content form document.
+        Example meta_name:
             "meta[name=description]"
             "meta[name=keywords]"
             "meta[property=og:type]"
         """
-        meta = self.parser.css_select(doc, metaName)
+        meta = self.parser.css_select(doc, meta_name)
         content = None
         if meta is not None and len(meta) > 0:
             content = self.parser.getAttribute(meta[0], 'content')
@@ -356,7 +365,8 @@ class ContentExtractor(object):
         return ''
 
     def get_meta_img_url(self, article_url, doc):
-        """Returns the 'top img' as specified by the website
+        """
+        Returns the 'top img' as specified by the website
         """
         top_meta_image, try_one, try_two, try_three, try_four = [None] * 5
         try_one = self.get_meta_content(doc, 'meta[property="og:image"]')
@@ -381,17 +391,20 @@ class ContentExtractor(object):
         return ''
 
     def get_meta_type(self, doc):
-        """Returns meta type of article, open graph protocol
+        """
+        Returns meta type of article, open graph protocol
         """
         return self.get_meta_content(doc, 'meta[property="og:type"]')
 
     def get_meta_description(self, doc):
-        """If the article has meta description set in the source, use that
+        """
+        If the article has meta description set in the source, use that
         """
         return self.get_meta_content(doc, "meta[name=description]")
 
     def get_meta_keywords(self, doc):
-        """If the article has meta keywords set in the source, use that
+        """
+        If the article has meta keywords set in the source, use that
         """
         return self.get_meta_content(doc, "meta[name=keywords]")
 
@@ -435,7 +448,8 @@ class ContentExtractor(object):
         return data
 
     def get_canonical_link(self, article_url, doc):
-        """If the article has meta canonical link set in the url
+        """
+        If the article has meta canonical link set in the url
         """
         kwargs = {'tag': 'link', 'attr': 'rel', 'value': 'canonical'}
         meta = self.parser.getElementsByTag(doc, **kwargs)
@@ -452,7 +466,8 @@ class ContentExtractor(object):
         return ''
 
     def get_img_urls(self, article_url, doc):
-        """Return all of the images on an html page, lxml root
+        """
+        Return all of the images on an html page, lxml root
         """
         img_kwargs = {'tag': 'img'}
         img_tags = self.parser.getElementsByTag(doc, **img_kwargs)
@@ -463,7 +478,8 @@ class ContentExtractor(object):
         return img_links
 
     def get_first_img_url(self, article_url, top_node):
-        """Retrieves the first image in the 'top_node'
+        """
+        Retrieves the first image in the 'top_node'
         The top node is essentially the HTML markdown where the main
         article lies and the first image in that area is probably signifigcant.
         """
@@ -474,7 +490,8 @@ class ContentExtractor(object):
         return ''
 
     def _get_urls(self, doc, titles):
-        """Return a list of urls or a list of (url, title_text) tuples
+        """
+        Return a list of urls or a list of (url, title_text) tuples
         if specified.
         """
         if doc is None:
@@ -490,7 +507,8 @@ class ContentExtractor(object):
         return [a.get('href') for a in a_tags if a.get('href')]
 
     def get_urls(self, doc_or_html, titles=False, regex=False):
-        """`doc_or_html`s html page or doc and returns list of urls, the regex
+        """
+        `doc_or_html`s html page or doc and returns list of urls, the regex
         flag indicates we don't parse via lxml and just search the html.
         """
         if doc_or_html is None:
@@ -512,7 +530,8 @@ class ContentExtractor(object):
         return self._get_urls(doc, titles)
 
     def get_category_urls(self, source_url, doc):
-        """Inputs source lxml root and source url, extracts domain and
+        """
+        Inputs source lxml root and source url, extracts domain and
         finds all of the top level urls, we are assuming that these are
         the category urls.
         cnn.com --> [cnn.com/latest, world.cnn.com, cnn.com/asia]
@@ -634,11 +653,10 @@ class ContentExtractor(object):
 
         category_urls = [urls.prepare_url(p_url, source_url)
                          for p_url in _valid_categories]
-        category_urls = [c for c in category_urls if c is not None]
-        return category_urls
+        return [c for c in category_urls if c is not None]
 
     def extract_tags(self, doc):
-        if len(list(doc)) == 0:
+        if not doc:
             return NO_STRINGS
         elements = self.parser.css_select(
             doc, A_REL_TAG_SELECTOR)
@@ -647,18 +665,10 @@ class ContentExtractor(object):
                 doc, A_HREF_TAG_SELECTOR)
             if not elements:
                 return NO_STRINGS
-
-        tags = []
-        for el in elements:
-            tag = self.parser.getText(el)
-            if tag:
-                tags.append(tag)
-        return set(tags)
+        return {self.parser.getText(el) for el in elements}
 
     def calculate_best_node(self, doc):
         nodes_to_check = self.nodes_to_check(doc)
-        starting_boost = float(1.0)
-        parent_nodes = []
         nodes_with_text = []
 
         for node in nodes_to_check:
@@ -670,7 +680,9 @@ class ContentExtractor(object):
                 nodes_with_text.append(node)
 
         nodes_number = len(nodes_with_text)
-        bottom_negativescore_nodes = float(nodes_number) * 0.25
+        bottom_negativescore_nodes = nodes_number * 0.25
+        starting_boost = 1
+        parent_nodes = []
 
         for cnt, node in enumerate(nodes_with_text):
             boost_score = 0
@@ -705,7 +717,7 @@ class ContentExtractor(object):
                 if parent_parent_node not in parent_nodes:
                     parent_nodes.append(parent_parent_node)
 
-        return max(parent_nodes, key=self.get_score, default=None)
+        return max(parent_nodes, key=self.get_score) if parent_nodes else None
 
     def is_boostable(self, node):
         """
@@ -735,11 +747,11 @@ class ContentExtractor(object):
 
     def walk_siblings(self, node):
         current_sibling = self.parser.previousSibling(node)
-        b = []
+        siblings = []
         while current_sibling is not None:
-            b.append(current_sibling)
+            siblings.append(current_sibling)
             current_sibling = self.parser.previousSibling(current_sibling)
-        return b
+        return siblings
 
     def add_siblings(self, top_node):
         baselinescore_siblings_para = self.get_siblings_score(top_node)
@@ -751,12 +763,14 @@ class ContentExtractor(object):
                 top_node.insert(0, p)
         return top_node
 
-    def get_siblings_content(
-            self, current_sibling, baselinescore_siblings_para):
-        """Adds any siblings that may have a decent score to this node
+    def get_siblings_content(self,
+                             current_sibling,
+                             baselinescore_siblings_para):
         """
-        if current_sibling.tag == 'p' and \
-                len(self.parser.getText(current_sibling)) > 0:
+        Adds any siblings that may have a decent score to this node
+        """
+        if (current_sibling.tag == 'p' and
+            len(self.parser.getText(current_sibling)) > 0):
             e0 = current_sibling
             if e0.tail:
                 e0 = copy.deepcopy(e0)
@@ -766,20 +780,21 @@ class ContentExtractor(object):
             potential_paragraphs = self.parser.getElementsByTag(
                 current_sibling, tag='p')
             if potential_paragraphs is None:
-                return None
+                return ()
             else:
                 ps = []
                 for first_paragraph in potential_paragraphs:
                     text = self.parser.getText(first_paragraph)
                     if len(text) > 0:
-                        word_stats = self.stopwords_class(language=self.language).\
+                        word_stats = \
+                            self.stopwords_class(language=self.language).\
                             get_stopword_count(text)
                         paragraph_score = word_stats.get_stopword_count()
-                        sibling_baseline_score = float(.30)
+                        sibling_baseline_score = .3
                         high_link_density = self.is_highlink_density(
                             first_paragraph)
-                        score = float(baselinescore_siblings_para *
-                                      sibling_baseline_score)
+                        score = (baselinescore_siblings_para *
+                                 sibling_baseline_score)
                         if score < paragraph_score and not high_link_density:
                             p = self.parser.createElement(
                                 tag='p', text=text, tail=None)
@@ -787,7 +802,8 @@ class ContentExtractor(object):
                 return ps
 
     def get_siblings_score(self, top_node):
-        """We could have long articles that have tons of paragraphs
+        """
+        We could have long articles that have tons of paragraphs
         so if we tried to calculate the base score against
         the total text score of those paragraphs it would be unfair.
         So we need to normalize the score based on the average scoring
@@ -815,68 +831,54 @@ class ContentExtractor(object):
         return base
 
     def update_score(self, node, addToScore):
-        """Adds a score to the gravityScore Attribute we put on divs
+        """
+        Adds a score to the gravityScore Attribute we put on divs
         we'll get the current score then add the score we're passing
         in to the current.
         """
-        current_score = 0
-        score_string = self.parser.getAttribute(node, 'gravityScore')
-        if score_string:
-            current_score = float(score_string)
-
+        current_score = float(
+            self.parser.getAttribute(node, 'gravityScore') or 0)
         new_score = current_score + addToScore
         self.parser.setAttribute(node, "gravityScore", str(new_score))
 
     def update_node_count(self, node, add_to_count):
-        """Stores how many decent nodes are under a parent node
         """
-        current_score = 0
-        count_string = self.parser.getAttribute(node, 'gravityNodes')
-        if count_string:
-            current_score = int(count_string)
-
+        Stores how many decent nodes are under a parent node
+        """
+        current_score = int(self.parser.getAttribute(node, 'gravityNodes') or 0)
         new_score = current_score + add_to_count
         self.parser.setAttribute(node, "gravityNodes", str(new_score))
 
     def is_highlink_density(self, e):
-        """Checks the density of links within a node, if there is a high
+        """
+        Checks the density of links within a node, if there is a high
         link to text ratio, then the text is less likely to be relevant
         """
         links = self.parser.getElementsByTag(e, tag='a')
-        if links is None or len(links) == 0:
+        if not links:
             return False
 
         text = self.parser.getText(e)
         words = text.split(' ')
-        words_number = float(len(words))
-        sb = []
-        for link in links:
-            sb.append(self.parser.getText(link))
-
-        linkText = ''.join(sb)
-        linkWords = linkText.split(' ')
-        numberOfLinkWords = float(len(linkWords))
-        numberOfLinks = float(len(links))
-        linkDivisor = float(numberOfLinkWords / words_number)
-        score = float(linkDivisor * numberOfLinks)
-        if score >= 1.0:
-            return True
-        return False
-        # return True if score > 1.0 else False
+        words_number = len(words)
+        sb = [self.parser.getText(link) for link in links]
+        link_text = ''.join(sb)
+        link_words = link_text.split(' ')
+        number_of_link_words = len(link_words)
+        number_of_links = len(links)
+        link_divisor = number_of_link_words / words_number
+        score = link_divisor * number_of_links
+        return score >= 1
 
     def get_score(self, node):
-        """Returns the gravityScore as an integer from this node
         """
-        return self.get_node_gravity_score(node) or 0
-
-    def get_node_gravity_score(self, node):
-        grvScoreString = self.parser.getAttribute(node, 'gravityScore')
-        if not grvScoreString:
-            return None
-        return float(grvScoreString)
+        Returns the gravityScore as an integer from this node
+        """
+        return float(self.parser.getAttribute(node, 'gravityScore') or 0)
 
     def nodes_to_check(self, doc):
-        """Returns a list of nodes we want to search
+        """
+        Returns a list of nodes we want to search
         on like paragraphs and tables
         """
         nodes_to_check = []
@@ -886,28 +888,24 @@ class ContentExtractor(object):
         return nodes_to_check
 
     def is_table_and_no_para_exist(self, e):
-        subParagraphs = self.parser.getElementsByTag(e, tag='p')
-        for p in subParagraphs:
+        sub_paragraphs = self.parser.getElementsByTag(e, tag='p')
+        for p in sub_paragraphs:
             txt = self.parser.getText(p)
             if len(txt) < 25:
                 self.parser.remove(p)
 
-        subParagraphs2 = self.parser.getElementsByTag(e, tag='p')
-        if len(subParagraphs2) == 0 and e.tag != "td":
-            return True
-        return False
+        filtered_sub_paragraphs = self.parser.getElementsByTag(e, tag='p')
+        return len(filtered_sub_paragraphs) == 0 and e.tag != "td"
 
     def is_nodescore_threshold_met(self, node, e):
         top_node_score = self.get_score(node)
-        current_nodeScore = self.get_score(e)
-        thresholdScore = float(top_node_score * .08)
-
-        if (current_nodeScore < thresholdScore) and e.tag != 'td':
-            return False
-        return True
+        current_node_score = self.get_score(e)
+        threshold = top_node_score * .08
+        return current_node_score >= threshold or e.tag == 'td'
 
     def post_cleanup(self, top_node):
-        """Remove any divs that looks like non-content, clusters of links,
+        """
+        Remove any divs that looks like non-content, clusters of links,
         or paras with no gusto; add adjacent nodes which look contenty
         """
         node = self.add_siblings(top_node)
