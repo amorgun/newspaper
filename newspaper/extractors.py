@@ -656,7 +656,7 @@ class ContentExtractor(object):
         return [c for c in category_urls if c is not None]
 
     def extract_tags(self, doc):
-        if not doc:
+        if doc is None or len(doc) == 0:
             return NO_STRINGS
         elements = self.parser.css_select(
             doc, A_REL_TAG_SELECTOR)
