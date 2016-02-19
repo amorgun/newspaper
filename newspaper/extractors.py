@@ -656,11 +656,8 @@ class ContentExtractor(object):
         return set(tags)
 
     def calculate_best_node(self, doc):
-        top_node = None
         nodes_to_check = self.nodes_to_check(doc)
         starting_boost = float(1.0)
-        cnt = 0
-        i = 0
         parent_nodes = []
         nodes_with_text = []
 
@@ -673,25 +670,20 @@ class ContentExtractor(object):
                 nodes_with_text.append(node)
 
         nodes_number = len(nodes_with_text)
-        negative_scoring = 0
         bottom_negativescore_nodes = float(nodes_number) * 0.25
 
-        for node in nodes_with_text:
-            boost_score = float(0)
-            # boost
-            if(self.is_boostable(node)):
-                if cnt >= 0:
-                    boost_score = float((1.0 / starting_boost) * 50)
-                    starting_boost += 1
-            # nodes_number
+        for cnt, node in enumerate(nodes_with_text):
+            boost_score = 0
+            if self.is_boostable(node):
+                boost_score = 50.0 / starting_boost
+                starting_boost += 1
             if nodes_number > 15:
-                if (nodes_number - i) <= bottom_negativescore_nodes:
-                    booster = float(
-                        bottom_negativescore_nodes - (nodes_number - i))
-                    boost_score = float(-pow(booster, float(2)))
-                    negscore = abs(boost_score) + negative_scoring
-                    if negscore > 40:
-                        boost_score = float(5)
+                offset_from_end = nodes_number - cnt
+                if offset_from_end <= bottom_negativescore_nodes:
+                    booster = bottom_negativescore_nodes - offset_from_end
+                    boost_score = -(booster ** 2)
+                    if abs(boost_score) > 40:
+                        boost_score = 5
 
             text_node = self.parser.getText(node)
             word_stats = self.stopwords_class(language=self.language).\
@@ -712,35 +704,23 @@ class ContentExtractor(object):
                 self.update_score(parent_parent_node, upscore / 2)
                 if parent_parent_node not in parent_nodes:
                     parent_nodes.append(parent_parent_node)
-            cnt += 1
-            i += 1
 
-        top_node_score = 0
-        for e in parent_nodes:
-            score = self.get_score(e)
-
-            if score > top_node_score:
-                top_node = e
-                top_node_score = score
-
-            if top_node is None:
-                top_node = e
-        return top_node
+        return max(parent_nodes, key=self.get_score, default=None)
 
     def is_boostable(self, node):
-        """Alot of times the first paragraph might be the caption under an image
+        """
+        Alot of times the first paragraph might be the caption under an image
         so we'll want to make sure if we're going to boost a parent node that
         it should be connected to other paragraphs, at least for the first n
         paragraphs so we'll want to make sure that the next sibling is a
         paragraph and has at least some substantial weight to it.
         """
         para = "p"
-        steps_away = 0
         minimum_stopword_count = 5
         max_stepsaway_from_node = 3
 
         nodes = self.walk_siblings(node)
-        for current_node in nodes:
+        for steps_away, current_node in enumerate(nodes):
             # <p>
             current_node_tag = self.parser.getTag(current_node)
             if current_node_tag == para:
@@ -751,7 +731,6 @@ class ContentExtractor(object):
                     get_stopword_count(paraText)
                 if word_stats.get_stopword_count() > minimum_stopword_count:
                     return True
-                steps_away += 1
         return False
 
     def walk_siblings(self, node):
